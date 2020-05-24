@@ -115,8 +115,21 @@ puts(Util.enum_to_string(Util.positive([1,2,3,-5,3,-20,9])))
 
 IO.puts("---------------------")
 board = Sudoku.get_board()
-board = Sudoku.set(board, 0, 1, 3)
-board = Sudoku.set(board, 1, 4, 5)
-board = List.replace_at(board, 0, [4])
+#board = Sudoku.set(board, 0, 1, 3)
+#board = Sudoku.set(board, 1, 4, 5)
+#board = List.replace_at(board, 0, [4])
+#board = Sudoku.action_single(board)
+#board = Sudoku.for_all(board, &Sudoku.get_row/2, &Sudoku.set_row/3, fn row, i -> List.replace_at(row, 0, [i + 1]) end)
+board = Sudoku.for_all_squares(board, fn row, i -> List.replace_at(row, 0, [i + 1]) end)
 board = Sudoku.action_single(board)
+board = List.replace_at(board, 54, [1, 2, 3, 7, 8])
+board = List.replace_at(board, 57, [1, 2, 3, 8, 7])
+
+#IO.inspect(board)
 Sudoku.print_board(board)
+
+#c = Sudoku.action_hidden_single([1,2,3])
+board = Sudoku.action_hidden_single(board)
+
+#IO.inspect(Enum.at(board, 54))
+

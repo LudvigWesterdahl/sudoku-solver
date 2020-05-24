@@ -40,6 +40,14 @@ defmodule Sudoku do
     end
   end
 
+  def get_square(board, square_index) do
+    get_square(board, div(square_index, 3), rem(square_index, 3))
+  end
+
+  def set_square(board, square_index, square) do
+    set_square(board, div(square_index, 3), rem(square_index, 3), square)
+  end
+
   def get_square(board, row_index, col_index) do
     get_square_for(board, row_index * 3, col_index * 3)
   end
@@ -158,7 +166,7 @@ defmodule Sudoku do
       end
     end)
     board = set_col(board, col_index, col)
-    IO.inspect(col)
+    #IO.inspect(col)
     board
   end
 
@@ -207,7 +215,7 @@ defmodule Sudoku do
     Enum.to_list(0..8)
     |> Enum.map(fn i -> get_row(board, i) end)
     |> Enum.each(fn row ->
-      first = Enum.reduce(row, "", fn cell, acc ->
+      first = Enum.reduce(row, "", fn _, acc ->
         acc <> "--------- "
       end)
 
@@ -231,11 +239,11 @@ defmodule Sudoku do
         if is_number(cell) do
           acc <> "|       | "
         else
-          acc <> "| " <> format_numbers([6,7,8], cell) <> " | "
+          acc <> "| " <> format_numbers([7,8,9], cell) <> " | "
         end
       end)
 
-      fifth = Enum.reduce(row, "", fn cell, acc ->
+      fifth = Enum.reduce(row, "", fn _, acc ->
         acc <> "--------- "
       end)
 
@@ -308,6 +316,8 @@ defmodule Sudoku do
 
 
   def action_single(board) do
+    # TODO: This one can be rewritten to simply loop over all cells.
+
     indexes = get_all_squares()
 
     # Single in square
@@ -326,12 +336,12 @@ defmodule Sudoku do
         {[c1], comb_index}
       end)
 
-      filtered = Enum.filter(comb_indexes, fn {c, c_indexes} ->
+      filtered = Enum.filter(comb_indexes, fn {_, c_indexes} ->
         length(c_indexes) == 1
       end)
 
       square = Enum.map(square, fn c ->
-        if c in Enum.map(filtered, fn {c, c_indexes} -> c end) do
+        if c in Enum.map(filtered, fn {c, _} -> c end) do
           [v] = c
           v
         else
@@ -367,8 +377,106 @@ defmodule Sudoku do
     IO.puts(name <> "=" <> to_string(value))
   end
 
-  def action_hidden_single(board) do
 
+  @doc """
+  Returns the modified board.
+
+  ## Parameters
+
+    - board: The sudoku board
+    - getter: Function to retrieve a row, column or square (container)
+    - setter: Function to set the container given the board, index, container
+    - mapper: Function to transform container taking the container, index.
+  """
+  def for_all(board, getter, setter, mapper) do
+    get_all(board, getter)
+    |> Enum.map(fn {container, i} -> {mapper.(container, i), i} end)
+    |> Enum.reduce(board, fn {container, i}, b -> setter.(b, i, container) end)
+  end
+
+  def get_all(board, fun) do
+    Enum.to_list(0..8)
+    |> Enum.map(fn i -> fun.(board, i) end)
+    |> Enum.with_index()
+  end
+
+  def for_all_rows(board, mapper) do
+    for_all(board, &Sudoku.get_row/2, &Sudoku.set_row/3, mapper)
+  end
+
+  def for_all_cols(board, mapper) do
+    for_all(board, &Sudoku.get_col/2, &Sudoku.set_col/3, mapper)
+  end
+
+  def for_all_squares(board, mapper) do
+    for_all(board, &Sudoku.get_square/2, &Sudoku.set_square/3, mapper)
+  end
+
+  def cell_combinations(size) do
+    combinations(size, Enum.to_list(1..9))
+  end
+
+  def contains_list?(list, another) do
+    another -- list == []
+  end
+
+
+  def replace_at_all(list, indexes, val) do
+    Enum.with_index(list)
+    |> Enum.map(fn {item, index} ->
+      if index in indexes do
+        val
+      else
+        item
+      end
+    end)
+  end
+
+  def action_hidden_single(board) do
+    # TODO: Generalize this function and the "for_all_rows" call below.
+    # For every combination, COMB.
+    #   If COMB is inside exactly len(COMB) many cells then replace those cells with COMB.
+
+    # 1. Get indexes of cells which contain COMB.
+    # 2. Check length of them, ensure they are size long.
+    # 3. Replace those cells with COMB using those indexes.
+
+
+    b_rows = for_all_rows(board, fn row, i ->
+      IO.puts("Currently at Row: " <> to_string(i))
+      size = 2
+      comb_indexes = cell_combinations(size)
+                     |> Enum.map(fn comb ->
+        indexes = Enum.with_index(row)
+                  |> Enum.reduce([], fn {cell, cell_index}, acc ->
+
+          if (not is_number(cell)) and contains_list?(cell, comb) do
+            acc ++ [cell_index]
+          else
+            acc
+          end
+        end)
+        {comb, indexes}
+      end)
+
+      comb_indexes_filtered = Enum.filter(comb_indexes, fn {comb, indexes} ->
+        length(indexes) == size
+        and not (Enum.with_index(row)
+        |> Enum.any?(fn {cell, cell_index} ->
+          if is_number(cell) or cell_index in indexes do
+            false
+          else
+            Enum.any?(comb, fn comb_val -> comb_val in cell end)
+          end
+        end))
+      end)
+
+      Enum.reduce(comb_indexes_filtered, row, fn {comb, indexes}, acc_row ->
+        replace_at_all(acc_row, indexes, Enum.sort(comb))
+      end)
+    end)
+
+    b_rows
   end
 
 
