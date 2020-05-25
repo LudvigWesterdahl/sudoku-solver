@@ -1,42 +1,80 @@
-defmodule Sudoku do
+defmodule Util do
+  @moduledoc """
+  Module containing utility functions.
+  """
 
-  # Primitives
+  @doc """
+  Returns true if a list contains all elements of another list and false otherwise.
 
-  def get_board() do
-    get_board([])
+  ## Parameters
+
+    - list: The list to check.
+    - another: The elements to check for containment in list.
+
+  ## Examples
+
+    iex> Util.contains_list?([1,2,3,4,5], [4,1,2])
+    true
+
+    iex> Util.contains_list?([1,2,3,4,5], [1,6])
+    false
+
+  """
+  def contains_list?(list, another) do
+    another -- list == []
   end
 
-  defp get_board(a) do
-    if length(a) == 81 do
-      a
-    else
-      get_board([Enum.to_list(1..9) | a])
-    end
-  end
-
-  # DEPRECATED
-  def get_candidates(board) do
-    f = get_single_candidates(board)
-    Enum.with_index(board)
-      |> Enum.map(f)
-  end
-
-  # DEPRECATED
-  def get_single_candidates(board) do
-    fn {v, i} ->
-      if is_number(v) do
-        [v]
+  @doc """
+  TODO: HERE
+  """
+  def replace_at_all(list, indexes, val) do
+    Enum.with_index(list)
+    |> Enum.map(fn {item, index} ->
+      if index in indexes do
+        val
+      else
+        item
       end
+    end)
+  end
 
-      row_index = div(i, 9)
-      col_index = rem(i, 9)
-      row = get_row(board, row_index)
-      col = get_col(board, col_index)
-      square = get_square_for(board, row_index, col_index)
+  def remove_from_all(list, except_indexes, values) do
+    Enum.with_index(list)
+    |> Enum.map(fn {item, index} ->
+      if index in except_indexes or not is_list(item) do
+        item
+      else
+        item -- values
+      end
+    end)
+  end
 
-      combined = row ++ col ++ square
-      Enum.to_list(1..9)
-        |> Enum.filter(fn v -> v not in combined end)
+end
+
+defmodule Sudoku do
+  @moduledoc """
+  Module to solve a sudoku puzzle.
+  """
+
+  @doc """
+  Returns a new fully populated sudoku puzzle board.
+  """
+  def get_board() do
+    do_get_board([])
+  end
+
+  @doc """
+  Implementation for Sudoku.get_board/0.
+
+  ## Parameters
+
+    - board: The sudoku board.
+  """
+  defp do_get_board(board) do
+    if length(board) == 81 do
+      board
+    else
+      do_get_board([Enum.to_list(1..9) | board])
     end
   end
 
@@ -132,6 +170,7 @@ defmodule Sudoku do
       end)
   end
 
+
   def set(board, row_index, col_index, num) do
     i = 9 * row_index + col_index
     board = List.replace_at(board, i, num)
@@ -156,7 +195,6 @@ defmodule Sudoku do
     end)
     board = set_row(board, row_index, row)
 
-
     col = get_col(board, col_index)
     |> Enum.map(fn c ->
       if is_number(c) do
@@ -170,6 +208,8 @@ defmodule Sudoku do
     board
   end
 
+
+
   def is_solved?(board) do
     Enum.to_list(1..9)
       |> Enum.map(fn i -> get_row(board, i - 1) end)
@@ -182,83 +222,6 @@ defmodule Sudoku do
     Enum.to_list(1..9)
     |> Enum.map(fn i -> get_square(board, i - 1) end)
     |> Enum.all?(fn square -> Enum.to_list(1..9) == Enum.sort(square) end)
-  end
-
-  def print_square(board, row_index, col_index) do
-    IO.puts("Row: " <> to_string(row_index) <> ", Col: " <> to_string(col_index))
-    square = get_square(board, row_index, col_index)
-    Enum.to_list(0..2)
-    |> Enum.each(fn r ->
-      Enum.to_list(0..2)
-      |> Enum.each(fn c ->
-        v = Enum.at(square, r * 3 + c)
-        if is_number(v) do
-          IO.write(v)
-        else
-          IO.write("[" <> Enum.join(v, ", ") <> "]")
-        end
-        IO.write(", ")
-      end)
-      IO.write("\n")
-    end)
-  end
-
-  def format_numbers(numbers, cell) do
-    Enum.reduce(numbers, "", fn num, acc ->
-      if num in cell do
-        acc <> to_string(num) <> " "
-      else
-        acc <> "  "
-      end
-    end)
-    |> String.slice(0..4)
-  end
-
-  def print_board(board) do
-
-    Enum.to_list(0..8)
-    |> Enum.map(fn i -> get_row(board, i) end)
-    |> Enum.each(fn row ->
-      first = Enum.reduce(row, "", fn _, acc ->
-        acc <> "--------- "
-      end)
-
-      second = Enum.reduce(row, "", fn cell, acc ->
-        if is_number(cell) do
-          acc <> "|       | "
-        else
-          acc <> "| " <> format_numbers([1,2,3], cell) <> " | "
-        end
-      end)
-
-      third = Enum.reduce(row, "", fn cell, acc ->
-        if is_number(cell) do
-          acc <> "| = " <> to_string(cell) <> " = | "
-        else
-          acc <> "| " <> format_numbers([4,5,6], cell) <> " | "
-        end
-      end)
-
-      fourth = Enum.reduce(row, "", fn cell, acc ->
-        if is_number(cell) do
-          acc <> "|       | "
-        else
-          acc <> "| " <> format_numbers([7,8,9], cell) <> " | "
-        end
-      end)
-
-      fifth = Enum.reduce(row, "", fn _, acc ->
-        acc <> "--------- "
-      end)
-
-      IO.puts(first)
-      IO.puts(second)
-      IO.puts(third)
-      IO.puts(fourth)
-      IO.puts(fifth)
-    end)
-
-    :ok
   end
 
   # Functions
@@ -361,34 +324,41 @@ defmodule Sudoku do
     combinations(size, Enum.to_list(1..9))
   end
 
-  def contains_list?(list, another) do
-    another -- list == []
+  @doc """
+  Performs the elimination of possibilities based on hidden combinations. For instance, if the numbers 1 and 3 are
+  in the same two cells in a row. For instance, cell#1 contains 1, 3, 5 and cell#2 contains 1, 3, 7, 8 and the other
+  cells in that row does not have a 1 or 3 in them as possibilities. Then, 1 and 3 has to be in those two cells
+  and the other possibilities can be removed from those two cells. That means removing 5 from cell#1 and
+  7,8 from cell#2. The example here used a size of 2 and works similarly for columns or squares.
+
+  ## Parameters
+
+    - board: The sudoku board.
+    - size: The length of the combination of numbers.
+
+  """
+  def action_hidden(board, size) do
+    modify_hidden(board, size, &Sudoku.for_all_rows/2)
+    |> modify_hidden(size, &Sudoku.for_all_cols/2)
+    |> modify_hidden(size, &Sudoku.for_all_squares/2)
   end
 
+  @doc """
+  Helper function for Sudoku.action_hidden/2 which performs the functionality on either, rows, columns or squares
+  depending on fun, see Sudoku.action_hidden/2.
 
-  def replace_at_all(list, indexes, val) do
-    Enum.with_index(list)
-    |> Enum.map(fn {item, index} ->
-      if index in indexes do
-        val
-      else
-        item
-      end
-    end)
-  end
+  ## Parameters
 
-  def remove_from_all(list, except_indexes, values) do
-    Enum.with_index(list)
-    |> Enum.map(fn {item, index} ->
-      if index in except_indexes or not is_list(item) do
-        item
-      else
-        item -- values
-      end
-    end)
-  end
+    - board: the sudoku board.
+    - size: The length of the combination of numbers.
+    - fun: A function that takes the board and a function to map the container and index to another board.
 
-  def modify_hidden(board, size, fun) do
+  ## Examples
+
+    iex> Sudoku.modify_hidden(board, 2, &Sudoku_for_all_cols/2)
+
+  """
+  defp modify_hidden(board, size, fun) do
     # For every combination, COMB.
     #   If COMB is inside exactly len(COMB) many cells then replace those cells with COMB.
 
@@ -402,7 +372,7 @@ defmodule Sudoku do
         indexes = Enum.with_index(container)
                   |> Enum.reduce([], fn {cell, cell_index}, acc ->
 
-          if (not is_number(cell)) and contains_list?(cell, comb) do
+          if (not is_number(cell)) and Util.contains_list?(cell, comb) do
             acc ++ [cell_index]
           else
             acc
@@ -424,18 +394,68 @@ defmodule Sudoku do
       end)
 
       Enum.reduce(comb_indexes_filtered, container, fn {comb, indexes}, acc_container ->
-        replace_at_all(acc_container, indexes, Enum.sort(comb))
+        Util.replace_at_all(acc_container, indexes, Enum.sort(comb))
       end)
     end)
   end
 
-  def action_hidden(board, size) do
-    modify_hidden(board, size, &Sudoku.for_all_rows/2)
-    |> modify_hidden(size, &Sudoku.for_all_cols/2)
-    |> modify_hidden(size, &Sudoku.for_all_squares/2)
+  @doc """
+  Sets all single possibilities as the number in those cells. For instance, if a cell contains only the possibility
+  5, then 5 has to be in that cell.
+
+  ## Parameters
+    - board: The sudoku board.
+  """
+  def action_visible(board, 1) do
+    single_indexes = Enum.with_index(board)
+                     |> Enum.reduce([], fn {cell, cell_index}, indexes ->
+      if is_number(cell) or length(cell) != 1 do
+        indexes
+      else
+        [head | _] = cell
+        indexes ++ [{head, cell_index}]
+      end
+    end)
+
+    Enum.reduce(single_indexes, board, fn {cell_num, cell_index}, b_acc ->
+      set(b_acc, div(cell_index, 9), rem(cell_index, 9), cell_num)
+    end)
   end
 
-  def modify_visible(board, size, fun) do
+  @doc """
+  Performs the elimination of possibilities based on visible combinations. For instance, if two cells in a row contains
+  only the possibilities 1 and 3, then 1 and 3 cannot exist in any other cell. Thus, 1 and 3 can be removed from
+  the possibilities in that row and also the square if those two cells are in the same square.
+  The example here used a size of 2 and works similarly for columns.
+
+  ## Parameters
+
+    - board: The sudoku board.
+    - size: The length of the combination of numbers.
+
+  """
+  def action_visible(board, size) when size != 1 do
+    modify_visible(board, size, &Sudoku.for_all_rows/2)
+    |> modify_visible(size, &Sudoku.for_all_cols/2)
+    |> modify_visible(size, &Sudoku.for_all_squares/2)
+  end
+
+  @doc """
+  Helper function for Sudoku.action_visible/2 which performs the functionality on either, rows, columns or squares
+  depending on fun, see Sudoku.action_visible/2.
+
+  ## Parameters
+
+    - board: the sudoku board.
+    - size: The length of the combination of numbers.
+    - fun: A function that takes the board and a function to map the container and index to another board.
+
+  ## Examples
+
+    iex> Sudoku.modify_visible(board, 2, &Sudoku_for_all_cols/2)
+
+  """
+  defp modify_visible(board, size, fun) do
     fun.(board, fn container, _ ->
       comb_indexes = cell_combinations(size)
                      |> Enum.map(fn comb ->
@@ -456,43 +476,41 @@ defmodule Sudoku do
       end)
 
       Enum.reduce(comb_indexes_filtered, container, fn {comb, indexes}, acc_container ->
-        remove_from_all(acc_container, indexes, Enum.sort(comb))
+        Util.remove_from_all(acc_container, indexes, Enum.sort(comb))
       end)
     end)
   end
 
-  def action_visible(board, 1) do
-    single_indexes = Enum.with_index(board)
-                     |> Enum.reduce([], fn {cell, cell_index}, indexes ->
-      if is_number(cell) or length(cell) != 1 do
-        indexes
-      else
-        [head | _] = cell
-        indexes ++ [{head, cell_index}]
-      end
-    end)
+  @doc """
+  Solves the sudoku board and returns the solved board.
 
-    Enum.reduce(single_indexes, board, fn {cell_num, cell_index}, b_acc ->
-      set(b_acc, div(cell_index, 9), rem(cell_index, 9), cell_num)
-    end)
+  ## Parameters
+
+    - board: The sudoku board to solve.
+    - interactive: Boolean flag if solver should print information during.
+  """
+  def solve(board, interactive) do
+    solve(board, interactive, -1)
   end
 
-  def action_visible(board, size) when size != 1 do
-    modify_visible(board, size, &Sudoku.for_all_rows/2)
-    |> modify_visible(size, &Sudoku.for_all_cols/2)
-    |> modify_visible(size, &Sudoku.for_all_squares/2)
-  end
+  @doc """
+  Solves the sudoku board and returns the solved board.
 
+  ## Parameters
 
+    - board: The sudoku board to solve.
+    - interactive: Boolean flag if solver should print information during.
+    - max_count: The maximum number of loops to perform before giving up.
 
+  """
   def solve(board, interactive, max_count) do
     do_solve(board, interactive, max_count, 0)
   end
 
-  def solve(board, interactive) do
-    do_solve(board, interactive, -1, 0)
-  end
+  @doc """
+  Implementation for Sudoku.solve/2 and Sudoko.solve/3.
 
+  """
   defp do_solve(board, interactive, max_count, count) do
     if interactive do
       IO.puts("Round: " <> to_string(count))
@@ -520,13 +538,26 @@ defmodule Sudoku do
     end
   end
 
+  @doc """
+  Prompts the user to enter the sudoku cells and returns the finished board.
+
+  """
   def create_solvable_board() do
     IO.puts("The cells are entered row by row.")
     IO.puts("Enter a number (1-9), S if no more numbers to input (start solve early) or just <enter> to continue.")
     do_create_solvable_board(get_board(), 0)
   end
 
-  def do_create_solvable_board(board, index) do
+  @doc """
+  Implementation for Sudoku.create_solvable_board/0.
+
+  ## Parameters
+
+    - board: The sudoku board being built.
+    - index: The cell index to read the next value to.
+
+  """
+  defp do_create_solvable_board(board, index) do
     if index == 81 do
       board
     else
@@ -541,5 +572,90 @@ defmodule Sudoku do
           do_create_solvable_board(new_board, index + 1)
       end
     end
+  end
+
+  @doc """
+  Helper function that returns a formatted string based on numbers and if they are in cell.
+
+  ## Parameters
+    - numbers: The numbers to format.
+    - cell: The sudoku cell.
+
+  ## Examples
+
+    iex> Sudoku.format_numbers([1, 2, 3], [1, 2, 3, 4])
+    "1 2 3"
+
+    iex> Sudoku.format_numbers([4, 5, 6], [1, 3, 4, 6, 7, 9])
+    "4   6"
+
+    iex> Sudoku.format_numbers([7, 8, 9], [1, 2, 3, 4, 9])
+    "    9"
+
+  """
+  def format_numbers(numbers, cell) do
+    Enum.reduce(numbers, "", fn num, acc ->
+      if num in cell do
+        acc <> to_string(num) <> " "
+      else
+        acc <> "  "
+      end
+    end)
+    |> String.slice(0..4)
+  end
+
+  @doc"""
+  Prints the board to the console.
+
+  ## Parameters
+
+    - board: The sudoku board to print.
+
+  """
+  def print_board(board) do
+
+    Enum.to_list(0..8)
+    |> Enum.map(fn i -> get_row(board, i) end)
+    |> Enum.each(fn row ->
+      first = Enum.reduce(row, "", fn _, acc ->
+        acc <> "--------- "
+      end)
+
+      second = Enum.reduce(row, "", fn cell, acc ->
+        if is_number(cell) do
+          acc <> "|       | "
+        else
+          acc <> "| " <> format_numbers([1,2,3], cell) <> " | "
+        end
+      end)
+
+      third = Enum.reduce(row, "", fn cell, acc ->
+        if is_number(cell) do
+          acc <> "| = " <> to_string(cell) <> " = | "
+        else
+          acc <> "| " <> format_numbers([4,5,6], cell) <> " | "
+        end
+      end)
+
+      fourth = Enum.reduce(row, "", fn cell, acc ->
+        if is_number(cell) do
+          acc <> "|       | "
+        else
+          acc <> "| " <> format_numbers([7,8,9], cell) <> " | "
+        end
+      end)
+
+      fifth = Enum.reduce(row, "", fn _, acc ->
+        acc <> "--------- "
+      end)
+
+      IO.puts(first)
+      IO.puts(second)
+      IO.puts(third)
+      IO.puts(fourth)
+      IO.puts(fifth)
+    end)
+
+    :ok
   end
 end

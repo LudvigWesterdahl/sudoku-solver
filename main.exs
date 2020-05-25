@@ -1,4 +1,4 @@
-defmodule Util do
+defmodule Utils do
 
   def tuple_to_string(tup) do
     tup |> Tuple.to_list() |> Enum.join(", ")
@@ -125,6 +125,7 @@ board = Enum.reduce(set_all, board, fn {row_index, col_index, num}, b_acc ->
   Sudoku.set(b_acc, row_index, col_index, num)
 end)
 #board = Sudoku.create_solvable_board()
-Sudoku.print_board(board)
+#Sudoku.print_board(board)
 board = Sudoku.solve(board, true, 10)
 Sudoku.print_board(board)
+#IO.inspect(Sudoku.format_numbers([1,2,3], [1,3,4,7,9]))
