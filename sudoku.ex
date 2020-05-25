@@ -514,10 +514,32 @@ defmodule Sudoku do
       if count == max_count do
         new_board
       else
+        # Tail recursion
         do_solve(new_board, interactive, max_count, count + 1)
       end
     end
   end
-end
 
-# Use tail recursion
+  def create_solvable_board() do
+    IO.puts("The cells are entered row by row.")
+    IO.puts("Enter a number (1-9), S if no more numbers to input (start solve early) or just <enter> to continue.")
+    do_create_solvable_board(get_board(), 0)
+  end
+
+  def do_create_solvable_board(board, index) do
+    if index == 81 do
+      board
+    else
+      c = String.trim(IO.gets("> "), "\n")
+      cond do
+        c == "S" ->
+          board
+        c == "" ->
+          do_create_solvable_board(board, index + 1)
+        {num, _} = Integer.parse(c) ->
+          new_board = set(board, div(index, 9), rem(index, 9), num)
+          do_create_solvable_board(new_board, index + 1)
+      end
+    end
+  end
+end
