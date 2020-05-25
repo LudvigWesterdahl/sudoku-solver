@@ -172,12 +172,16 @@ defmodule Sudoku do
 
   def is_solved?(board) do
     Enum.to_list(1..9)
-      |> Enum.map(fn i -> get_row(board, i) end)
+      |> Enum.map(fn i -> get_row(board, i - 1) end)
       |> Enum.all?(fn row -> Enum.to_list(1..9) == Enum.sort(row) end)
     and
     Enum.to_list(1..9)
-    |> Enum.map(fn i -> get_col(board, i) end)
+    |> Enum.map(fn i -> get_col(board, i - 1) end)
     |> Enum.all?(fn col -> Enum.to_list(1..9) == Enum.sort(col) end)
+    and
+    Enum.to_list(1..9)
+    |> Enum.map(fn i -> get_square(board, i - 1) end)
+    |> Enum.all?(fn square -> Enum.to_list(1..9) == Enum.sort(square) end)
   end
 
   def print_square(board, row_index, col_index) do
@@ -314,65 +318,6 @@ defmodule Sudoku do
     end)
   end
 
-
-  def action_single(board) do
-    # TODO: This one can be rewritten to simply loop over all cells.
-
-    indexes = get_all_squares()
-
-    # Single in square
-    final_board = Enum.reduce(indexes, board, fn {r, c}, b ->
-      square = get_square(b, r, c)
-
-      combs = combinations(1, Enum.to_list(1..9))
-      comb_indexes = Enum.map(combs, fn [c1] ->
-        comb_index = Enum.reduce(Enum.with_index(square), [], fn {c, i}, acc ->
-          if [c1] == c do
-            acc ++ [i]
-          else
-            acc
-          end
-        end)
-        {[c1], comb_index}
-      end)
-
-      filtered = Enum.filter(comb_indexes, fn {_, c_indexes} ->
-        length(c_indexes) == 1
-      end)
-
-      square = Enum.map(square, fn c ->
-        if c in Enum.map(filtered, fn {c, _} -> c end) do
-          [v] = c
-          v
-        else
-          c
-        end
-      end)
-
-      #IO.inspect(square)
-
-      new_board = Enum.with_index(square)
-      |> Enum.reduce(b, fn {cell, i}, b ->
-        if is_number(cell) do
-          start_index = 9 * 3 * r + 3 * c
-
-          start_indexes = [0, 1, 2, 9, 10, 11, 18, 19, 20]
-                    |> Enum.map(fn ti -> ti + start_index end)
-
-          index = Enum.at(start_indexes, i)
-
-          set(b, div(index, 9), rem(index, 9), cell)
-        else
-          b
-        end
-      end)
-
-      new_board
-      end)
-
-    final_board
-  end
-
   def print(name, value) do
     IO.puts(name <> "=" <> to_string(value))
   end
@@ -432,8 +377,18 @@ defmodule Sudoku do
     end)
   end
 
-  def action_hidden_single(board) do
-    # TODO: Generalize this function and the "for_all_rows" call below.
+  def remove_from_all(list, except_indexes, values) do
+    Enum.with_index(list)
+    |> Enum.map(fn {item, index} ->
+      if index in except_indexes or not is_list(item) do
+        item
+      else
+        item -- values
+      end
+    end)
+  end
+
+  def modify_hidden(board, size, fun) do
     # For every combination, COMB.
     #   If COMB is inside exactly len(COMB) many cells then replace those cells with COMB.
 
@@ -441,13 +396,10 @@ defmodule Sudoku do
     # 2. Check length of them, ensure they are size long.
     # 3. Replace those cells with COMB using those indexes.
 
-
-    b_rows = for_all_rows(board, fn row, i ->
-      IO.puts("Currently at Row: " <> to_string(i))
-      size = 2
+    fun.(board, fn container, i ->
       comb_indexes = cell_combinations(size)
                      |> Enum.map(fn comb ->
-        indexes = Enum.with_index(row)
+        indexes = Enum.with_index(container)
                   |> Enum.reduce([], fn {cell, cell_index}, acc ->
 
           if (not is_number(cell)) and contains_list?(cell, comb) do
@@ -461,8 +413,8 @@ defmodule Sudoku do
 
       comb_indexes_filtered = Enum.filter(comb_indexes, fn {comb, indexes} ->
         length(indexes) == size
-        and not (Enum.with_index(row)
-        |> Enum.any?(fn {cell, cell_index} ->
+        and not (Enum.with_index(container)
+                 |> Enum.any?(fn {cell, cell_index} ->
           if is_number(cell) or cell_index in indexes do
             false
           else
@@ -471,16 +423,101 @@ defmodule Sudoku do
         end))
       end)
 
-      Enum.reduce(comb_indexes_filtered, row, fn {comb, indexes}, acc_row ->
-        replace_at_all(acc_row, indexes, Enum.sort(comb))
+      Enum.reduce(comb_indexes_filtered, container, fn {comb, indexes}, acc_container ->
+        replace_at_all(acc_container, indexes, Enum.sort(comb))
       end)
     end)
+  end
 
-    b_rows
+  def action_hidden(board, size) do
+    modify_hidden(board, size, &Sudoku.for_all_rows/2)
+    |> modify_hidden(size, &Sudoku.for_all_cols/2)
+    |> modify_hidden(size, &Sudoku.for_all_squares/2)
+  end
+
+  def modify_visible(board, size, fun) do
+    fun.(board, fn container, i ->
+      comb_indexes = cell_combinations(size)
+                     |> Enum.map(fn comb ->
+        indexes = Enum.with_index(container)
+                  |> Enum.reduce([], fn {cell, cell_index}, acc ->
+
+          if (not is_number(cell)) and Enum.sort(cell) == Enum.sort(comb) do
+            acc ++ [cell_index]
+          else
+            acc
+          end
+        end)
+        {comb, indexes}
+      end)
+
+      comb_indexes_filtered = Enum.filter(comb_indexes, fn {comb, indexes} ->
+        length(indexes) == size
+      end)
+
+      Enum.reduce(comb_indexes_filtered, container, fn {comb, indexes}, acc_container ->
+        remove_from_all(acc_container, indexes, Enum.sort(comb))
+      end)
+    end)
+  end
+
+  def action_visible(board, 1) do
+    single_indexes = Enum.with_index(board)
+                     |> Enum.reduce([], fn {cell, cell_index}, indexes ->
+      if is_number(cell) or length(cell) != 1 do
+        indexes
+      else
+        [head | tail] = cell
+        indexes ++ [{head, cell_index}]
+      end
+    end)
+
+    Enum.reduce(single_indexes, board, fn {cell_num, cell_index}, b_acc ->
+      set(b_acc, div(cell_index, 9), rem(cell_index, 9), cell_num)
+    end)
+  end
+
+  def action_visible(board, size) when size != 1 do
+    modify_visible(board, size, &Sudoku.for_all_rows/2)
+    |> modify_visible(size, &Sudoku.for_all_cols/2)
+    |> modify_visible(size, &Sudoku.for_all_squares/2)
   end
 
 
 
+  def solve(board, interactive, max_count) do
+    do_solve(board, interactive, max_count, 0)
+  end
+
+  def solve(board, interactive) do
+    do_solve(board, interactive, -1, 0)
+  end
+
+  defp do_solve(board, interactive, max_count, count) do
+    if interactive do
+      IO.puts("Round: " <> to_string(count))
+    end
+
+    if is_solved?(board) do
+      if interactive do
+        IO.puts("Solved at round: " <> to_string(count))
+      end
+
+      board
+    else
+      new_board = Enum.to_list(1..4)
+                  |> Enum.reduce(board, fn size, b_acc ->
+        action_hidden(b_acc, size)
+        |> action_visible(size)
+      end)
+
+      if count == max_count do
+        new_board
+      else
+        do_solve(new_board, interactive, max_count, count + 1)
+      end
+    end
+  end
 end
 
 # Use tail recursion
