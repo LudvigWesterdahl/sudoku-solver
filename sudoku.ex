@@ -396,7 +396,7 @@ defmodule Sudoku do
     # 2. Check length of them, ensure they are size long.
     # 3. Replace those cells with COMB using those indexes.
 
-    fun.(board, fn container, i ->
+    fun.(board, fn container, _ ->
       comb_indexes = cell_combinations(size)
                      |> Enum.map(fn comb ->
         indexes = Enum.with_index(container)
@@ -436,7 +436,7 @@ defmodule Sudoku do
   end
 
   def modify_visible(board, size, fun) do
-    fun.(board, fn container, i ->
+    fun.(board, fn container, _ ->
       comb_indexes = cell_combinations(size)
                      |> Enum.map(fn comb ->
         indexes = Enum.with_index(container)
@@ -451,7 +451,7 @@ defmodule Sudoku do
         {comb, indexes}
       end)
 
-      comb_indexes_filtered = Enum.filter(comb_indexes, fn {comb, indexes} ->
+      comb_indexes_filtered = Enum.filter(comb_indexes, fn {_, indexes} ->
         length(indexes) == size
       end)
 
@@ -467,7 +467,7 @@ defmodule Sudoku do
       if is_number(cell) or length(cell) != 1 do
         indexes
       else
-        [head | tail] = cell
+        [head | _] = cell
         indexes ++ [{head, cell_index}]
       end
     end)
