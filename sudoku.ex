@@ -25,7 +25,23 @@ defmodule Util do
   end
 
   @doc """
-  TODO: HERE
+  Replaces all values at the indexes in list with val. This function works like List.replace_at/3
+  for all indexes with the same value.
+
+  ## Parameters
+
+    - list: The list to replace in.
+    - indexes: The indexes in the list to replace at.
+    - val: The value to insert at the specified indexes.
+
+  ## Examples
+
+    iex> Util.replace_at_all([1, 2, 4, 8, 16], [0, 3], 90)
+    [90, 2, 4, 90, 16]
+
+    iex> Util.replace_at_all([1, 2, 3], [1, 5], 90)
+    [1, 90, 3]
+
   """
   def replace_at_all(list, indexes, val) do
     Enum.with_index(list)
@@ -38,6 +54,24 @@ defmodule Util do
     end)
   end
 
+  @doc """
+  Removes elements from each element in a list except at some given indexes.
+
+  ## Parameters
+
+    - list: The list to remove from.
+    - except_indexes: The indexes to ignore.
+    - values: The values to remove from each element in list.
+
+  ## Examples
+
+    iex> Util.remove_from_all([[1, 2, 3], [1, 2, 3]], [1], [1, 3])
+    [[2], [1, 2, 3]]
+
+    iex> Util.remove_from_all([[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]], [0, 3], [1, 5])
+    [[1, 2, 3], [2, 3], [2, 3], [1, 2, 3]]
+
+  """
   def remove_from_all(list, except_indexes, values) do
     Enum.with_index(list)
     |> Enum.map(fn {item, index} ->
