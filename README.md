@@ -81,9 +81,9 @@ inputting them through the console like this.
 
 ```console
 Enter a number (1-9), S if no more numbers to input (start solve early) or just <enter> to continue.
-> 4
-> 
-> 3
+4
+
+3
 ...
 ```
 

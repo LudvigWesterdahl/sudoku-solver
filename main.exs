@@ -227,15 +227,15 @@ solution_board_3 = [
 board = Sudoku.get_board()
 
 board_1 = Enum.reduce(pre_board_1, board, fn {row_index, col_index, num}, b_acc ->
-  Sudoku.set(b_acc, row_index, col_index, num)
+  Sudoku.set(b_acc, 9 * row_index + col_index, num)
 end)
 
 board_2 = Enum.reduce(pre_board_2, board, fn {row_index, col_index, num}, b_acc ->
-  Sudoku.set(b_acc, row_index, col_index, num)
+  Sudoku.set(b_acc, 9 * row_index + col_index, num)
 end)
 
 board_3 = Enum.reduce(pre_board_3, board, fn {row_index, col_index, num}, b_acc ->
-  Sudoku.set(b_acc, row_index, col_index, num)
+  Sudoku.set(b_acc, 9 * row_index + col_index, num)
 end)
 
 # Solving the boards.
