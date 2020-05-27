@@ -258,5 +258,5 @@ IO.puts("Is board 2 solved? " <> to_string(board_2 == solution_board_2))
 IO.puts("Is board 3 solved? " <> to_string(board_3 == solution_board_3))
 
 #Sudoku.create_solvable_board()
-#|> Sudoku.solve(true)
+#|> Sudoku.solve(true, 200)
 #|> Sudoku.print_board()

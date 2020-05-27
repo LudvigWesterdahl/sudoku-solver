@@ -258,8 +258,6 @@ defmodule Sudoku do
     |> Enum.all?(fn square -> Enum.to_list(1..9) == Enum.sort(square) end)
   end
 
-  # Functions
-
   def get_all_squares() do
     Enum.to_list(0..8)
     |> Enum.map(fn i -> {div(i, 3), rem(i, 3)} end)
@@ -557,7 +555,7 @@ defmodule Sudoku do
 
       board
     else
-      new_board = Enum.to_list(1..4)
+      new_board = Enum.to_list(1..5)
                   |> Enum.reduce(board, fn size, b_acc ->
         action_hidden(b_acc, size)
         |> action_visible(size)
