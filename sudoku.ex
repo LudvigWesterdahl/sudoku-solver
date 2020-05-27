@@ -3,7 +3,7 @@ defmodule Util do
   Module containing utility functions.
   """
 
-  @doc"""
+  @doc """
   Converts a list to a string representation.
   """
   def list_to_string(list) do
@@ -238,7 +238,7 @@ defmodule Sudoku do
 #    get_square_for(board, row_index, col_index)
 #  end
 
-  @doc"""
+  @doc """
   Returns the index of the row given the index of a cell.
 
   ## Parameters
@@ -856,7 +856,7 @@ defmodule Sudoku do
     |> String.slice(0..4)
   end
 
-  @doc"""
+  @doc """
   Prints the board to the console.
 
   ## Parameters
