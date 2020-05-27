@@ -1,98 +1,3 @@
-defmodule Utils do
-
-  def tuple_to_string(tup) do
-    tup |> Tuple.to_list() |> Enum.join(", ")
-  end
-
-  def enum_to_string(enum) do
-    middle = enum
-      |> Enum.to_list()
-      |> Enum.join(", ")
-
-    "[" <> middle <> "]"
-  end
-
-  def list_len(a) when not is_list(a) do
-    {:error, :invalid_argument}
-  end
-
-  def list_len([]) do
-    0
-  end
-
-  def list_len([head | tail]) do
-    do_list_len([head | tail], 0)
-  end
-
-  defp do_list_len([], a) do
-    a
-  end
-
-  defp do_list_len([_ | tail], a) do
-    do_list_len(tail, a + 1)
-  end
-
-
-  def range(from, to) when is_number(from) and is_number(to) do
-    do_range(from, to, [])
-  end
-
-  def range(_, _) do
-    {:error, :invalid_arguments}
-  end
-
-  defp do_range(from, to, list) when from - 1 == to do
-    list
-  end
-
-  defp do_range(from, to, list) do
-    new_list = [to | list]
-    do_range(from, to - 1, new_list)
-  end
-
-  def positive(list) when is_list(list) do
-    do_positive(list, [])
-  end
-
-  defp do_positive([], a) do
-    Enum.reverse(a)
-  end
-
-  defp do_positive(list, a) do
-    [head | tail] = list
-
-    if head > 0 do
-      do_positive(tail, [head | a])
-    else
-      do_positive(tail, a)
-    end
-  end
-
-
-  def list_to_string(list) do
-    "[" <> do_list_to_string(list)
-  end
-
-  defp do_list_to_string([]) do
-    ""
-  end
-
-  defp do_list_to_string([head | tail]) do
-    head_string = case head do
-      [_ | _] -> "[" <> do_list_to_string(head)
-      [] -> "[]"
-      num -> to_string(num)
-    end
-
-    tail_string = case tail do
-      [_ | _] -> ", " <> do_list_to_string(tail)
-      [] -> "]"
-    end
-
-    head_string <> tail_string
-  end
-end
-
 pre_board_1 = [
   {1, 2, 9},
   {1, 4, 2},
@@ -241,21 +146,21 @@ end)
 # Solving the boards.
 
 #Sudoku.print_board(board_1)
-board_1 = Sudoku.solve(board_1, false)
+board_1 = Sudoku.solve(board_1, true)
 #Sudoku.print_board(board_1)
 
 #Sudoku.print_board(board_2)
-board_2 = Sudoku.solve(board_2, false)
+board_2 = Sudoku.solve(board_2, true)
 #Sudoku.print_board(board_2)
 
 #Sudoku.print_board(board_3)
-board_3 = Sudoku.solve(board_3, false)
+board_3 = Sudoku.solve(board_3, true)
 #Sudoku.print_board(board_3)
 
 # Ensures the boards are correctly solved.
-IO.puts("Is board 1 solved? " <> to_string(board_1 == solution_board_1))
-IO.puts("Is board 2 solved? " <> to_string(board_2 == solution_board_2))
-IO.puts("Is board 3 solved? " <> to_string(board_3 == solution_board_3))
+IO.puts(if board_1 == solution_board_1 do "Successfully solved board 1!" else "Failed to solve board 1." end)
+IO.puts(if board_2 == solution_board_2 do "Successfully solved board 2!" else "Failed to solve board 2." end)
+IO.puts(if board_3 == solution_board_3 do "Successfully solved board 3!" else "Failed to solve board 3." end)
 
 #Sudoku.create_solvable_board()
 #|> Sudoku.solve(true, 200)

@@ -3,6 +3,38 @@ defmodule Util do
   Module containing utility functions.
   """
 
+  @doc"""
+  Converts a list to a string representation.
+  """
+  def list_to_string(list) do
+    "[" <> do_list_to_string(list)
+  end
+
+  @doc """
+  Implementation for list_to_string/1.
+  """
+  defp do_list_to_string([]) do
+    ""
+  end
+
+  @doc """
+  Implementation for list_to_string/1.
+  """
+  defp do_list_to_string([head | tail]) do
+    head_string = case head do
+      [_ | _] -> "[" <> do_list_to_string(head)
+      [] -> "[]"
+      num -> to_string(num)
+    end
+
+    tail_string = case tail do
+      [_ | _] -> ", " <> do_list_to_string(tail)
+      [] -> "]"
+    end
+
+    head_string <> tail_string
+  end
+
   @doc """
   Returns true if a list contains all elements of another list and false otherwise.
 
@@ -380,17 +412,6 @@ defmodule Sudoku do
     ++ Enum.slice(board, start_index + 18, 3)
   end
 
-#  def get_square_for(board, row_index, col_index) do
-#    r = div(row_index, 3)
-#    c = div(col_index, 3)
-#
-#    start_index = 9 * 3 * r + 3 * c
-#
-#    Enum.slice(board, start_index, 3)
-#    ++ Enum.slice(board, start_index + 9, 3)
-#    ++ Enum.slice(board, start_index + 18, 3)
-#  end
-
   @doc """
   Replaces the row at the given index.
 
@@ -414,34 +435,6 @@ defmodule Sudoku do
       end
     end)
   end
-
-
-
-#  def set_square_OLD_OLD_OLD(board, row_index, col_index, square) do
-#    start_index = 9 * 3 * row_index + 3 * col_index
-#
-#    indexes = [0, 1, 2, 9, 10, 11, 18, 19, 20]
-#              |> Enum.map(fn i -> i + start_index end)
-#
-#    Enum.with_index(board)
-#      |> Enum.map(fn {c, i} ->
-#        if i in indexes do
-#          Enum.at(square, div(i - start_index, 3) + rem(i - start_index, 3))
-#        else
-#          c
-#        end
-#      end)
-#  end
-
-
-
-#  def set_square_for(board, row_index, col_index, square) do
-#    r = div(row_index, 3)
-#    c = div(col_index, 3)
-#
-#    #set_square(board, r,  c, square)
-#    set_square(board, 3 * r + c, square)
-#  end
 
   @doc """
   Sets a number at the given index on the board and updates all possibilities across the board.
@@ -487,45 +480,6 @@ defmodule Sudoku do
     board
   end
 
-#  def set(board, row_index, col_index, num) do
-#    i = 9 * row_index + col_index
-#    board = List.replace_at(board, i, num)
-#
-#    square = get_square_for(board, row_index, col_index)
-#             |> Enum.map(fn c ->
-#      if is_number(c) do
-#        c
-#      else
-#        List.delete(c, num)
-#      end
-#    end)
-#    board = set_square_for(board, row_index, col_index, square)
-#
-#    row = get_row(board, row_index)
-#          |> Enum.map(fn c ->
-#      if is_number(c) do
-#        c
-#      else
-#        List.delete(c, num)
-#      end
-#    end)
-#    board = set_row(board, row_index, row)
-#
-#    col = get_col(board, col_index)
-#          |> Enum.map(fn c ->
-#      if is_number(c) do
-#        c
-#      else
-#        List.delete(c, num)
-#      end
-#    end)
-#    board = set_col(board, col_index, col)
-#    #IO.inspect(col)
-#    board
-#  end
-
-
-
   @doc """
   Returns true if the board is solved and false otherwise.
 
@@ -546,44 +500,6 @@ defmodule Sudoku do
     |> Enum.map(fn i -> get_square(board, i - 1) end)
     |> Enum.all?(fn square -> Enum.to_list(1..9) == Enum.sort(square) end)
   end
-
-#  def get_all_squares() do
-#    Enum.to_list(0..8)
-#    |> Enum.map(fn i -> {div(i, 3), rem(i, 3)} end)
-#  end
-
-#  def indexes_of_duplicates(lists, dup, num) do
-#    duplicates = Enum.reduce(Enum.with_index(lists), [], fn {list, i}, acc ->
-#      if num in list do
-#        [i | acc]
-#      else
-#        acc
-#      end
-#    end)
-#
-#    if length(duplicates) == dup do
-#      duplicates
-#    else
-#      []
-#    end
-#  end
-
-#  def same_duplicates(lists, nums) do
-#    duplicates = Enum.map(nums, fn num ->
-#      indexes_of_duplicates(lists, length(nums), num)
-#    end)
-#
-#    if length(hd(duplicates)) == 0 do
-#      []
-#    end
-#
-#    if Enum.all?(duplicates, fn d -> d == hd(duplicates) end) do
-#      hd(duplicates)
-#    else
-#      []
-#    end
-#  end
-
 
   @doc """
   Iterates over the board and calls the function fun with the arguments, board and index from 0 to 8
@@ -990,7 +906,6 @@ defmodule Sudoku do
       IO.puts(fourth)
       IO.puts(fifth)
     end)
-
     :ok
   end
 end
