@@ -227,17 +227,6 @@ defmodule Sudoku do
     end
   end
 
-#  def get_square(board, row_index, col_index) do
-#    get_square_for(board, row_index * 3, col_index * 3)
-#  end
-
-#  def get_square_for(board, index) do
-#    row_index = div(index, 9)
-#    col_index = rem(index, 9)
-#
-#    get_square_for(board, row_index, col_index)
-#  end
-
   @doc """
   Returns the index of the row given the index of a cell.
 
@@ -401,7 +390,6 @@ defmodule Sudoku do
     iex> get_square(board, 8) # Gets the bottom right (last) square
   """
   def get_square(board, square_index) do
-    #get_square_for(board, 3 * div(square_index, 3), 3 * rem(square_index, 3))
     r = div(square_index, 3)
     c = rem(square_index, 3)
 
@@ -420,7 +408,6 @@ defmodule Sudoku do
     - row_index: The index of the row (0-8) top to bottom.
   """
   def set_square(board, square_index, square) do
-    # TODO: Improve this?
     start_index = 9 * 3 * div(square_index, 3) + 3 * rem(square_index, 3)
 
     indexes = [0, 1, 2, 9, 10, 11, 18, 19, 20]
@@ -616,12 +603,9 @@ defmodule Sudoku do
     iex> Sudoku.modify_hidden(board, 2, &Sudoku_for_all_cols/2)
   """
   defp modify_hidden(board, size, fun) do
-    # For every combination, COMB.
-    #   If COMB is inside exactly len(COMB) many cells then replace those cells with COMB.
-
-    # 1. Get indexes of cells which contain COMB.
-    # 2. Check length of them, ensure they are size long.
-    # 3. Replace those cells with COMB using those indexes.
+    # 1. For every combination, comb.
+    # 2. Get indexes of every cells containing comb.
+    # 3. If length(indexes) is equal to length(comb) then replace those cells with comb.
 
     fun.(board, fn container, _ ->
       comb_indexes = cell_combinations(size)
