@@ -162,6 +162,6 @@ IO.puts(if board_1 == solution_board_1 do "Successfully solved board 1!" else "F
 IO.puts(if board_2 == solution_board_2 do "Successfully solved board 2!" else "Failed to solve board 2." end)
 IO.puts(if board_3 == solution_board_3 do "Successfully solved board 3!" else "Failed to solve board 3." end)
 
-#Sudoku.create_solvable_board()
-#|> Sudoku.solve(true, 200)
-#|> Sudoku.print_board()
+Sudoku.create_solvable_board()
+|> Sudoku.solve(true, 200)
+|> Sudoku.print_board()
